@@ -29,6 +29,8 @@ export function createUser(
         id: id,
         firstName: faker.person.firstName(),
         lastName: faker.person.lastName(),
+        email: faker.internet.email(),
+        role: faker.person.jobTitle(),
         img: faker.image.avatarGitHub(),
         department: faker.commerce.department(),
     }
