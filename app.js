@@ -77,6 +77,13 @@ app.post('/api/alarm', (req, res) => {
     res.json({ status: 'Alarm scheduled' })
 })
 
+app.delete('/api/alarm', (req, res) => {
+    console.log("CLEAR ALARMS", req.user)
+    queue.remove((v) => v.user === req.user);
+
+    res.status(200).json({msg: "alarm cleared"})
+})
+
 app.get('/', (req, res) => {
     res.status(200).json({msg: 'home'})
 })
