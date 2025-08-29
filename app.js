@@ -96,7 +96,7 @@ app.get('/api/me', (req, res) => {
 })
 
 app.get('/api/users', (req, res) => {
-    return res.status(200).json({users: [...users.entries()]})
+    return res.status(200).json({users: [...users.values()]})
 })
 
 app.get('/', (req, res) => {
