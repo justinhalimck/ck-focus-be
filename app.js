@@ -17,6 +17,7 @@ app.use(auth)
 
 const subscriptions = new Map();
 const users = new Map();
+const invitations = new Map() // invitationId => userId => pending/accepted/rejected
 
 const publicVapidKey = process.env.VAPID_PUBLIC_KEY
 const privateVapidKey = process.env.VAPID_PRIVATE_KEY
@@ -32,6 +33,28 @@ function sendAlert(alert) {
     console.log("SENDING ALERT TO", alert.user)
     webpush.sendNotification(JSON.parse(subscriptions.get(alert.user)), JSON.stringify({ title: alert.title, body: alert.body }))
       .catch(err => console.error(err))
+}
+
+function sendInvitation(id, from, to) {
+    if (!subscriptions.has(to)) {
+        console.error("subscription not found", to, subscriptions);
+        return;
+    }
+
+    if (!invitations.has(id)) {
+        invitations.set(id, new Map())
+    }
+    invitations.get(id).set(to, "pending")
+
+    console.log("SENDING INVITATION", from, to)
+    webpush.sendNotification(JSON.parse(subscriptions.get(to)), JSON.stringify({
+        title: "invite",
+        body: {
+            id,
+            from: users.get(from).firstName ?? from,
+            to: users.get(to).lastName ?? to,
+        }
+    }))
 }
 
 const queue = new MinPriorityQueue((e) => e.notifyAt)
@@ -55,7 +78,6 @@ app.post('/api/subscribe', (req, res) => {
     
     const subscription = req.body.subscription
     subscriptions.set(user, subscription);
-    
     res.status(201).json({})
 })
 
@@ -93,6 +115,25 @@ app.get('/api/me', (req, res) => {
         users.set(req.user, createUser(req.user));
     }
     res.status(200).json(users.get(req.user));
+})
+
+app.post('/api/invite', (req, res) => {
+    const id = req.body.id;
+    const from = req.user;
+    const to = req.body.to; 
+    sendInvitation(id, from, to);
+    res.status(200).json({ status: 'Invitation sent' });
+})
+
+app.post('/api/invite/respond', (req, res) => {
+    const id = req.body.id;
+    const user = req.user
+    const response = req.body.response
+    if (!invitations.has(id)) {
+        return res.status(404).json({ error: 'Invitation not found' })
+    }
+    invitations.get(id).set(user, response)
+    res.status(200).json({ status: 'Invitation response recorded' });
 })
 
 app.get('/api/users', (req, res) => {
