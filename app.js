@@ -4,7 +4,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const webpush = require('web-push')
 const cors = require('cors')
-const { auth, createAlert } = require('./lib')
+const { auth, createAlert, createUser } = require('./lib')
 
 const {
     MinPriorityQueue,
@@ -16,6 +16,7 @@ app.use(cors({origin: '*'}))
 app.use(auth)
 
 const subscriptions = new Map();
+const users = new Map();
 
 const publicVapidKey = process.env.VAPID_PUBLIC_KEY
 const privateVapidKey = process.env.VAPID_PRIVATE_KEY
@@ -48,6 +49,9 @@ const worker = setInterval(() => {
 // Store subscription
 app.post('/api/subscribe', (req, res) => {
     const user = req.user;
+    if(!users.has(req.user)) {
+        users.set(user, createUser(req.user));
+    }
     
     const subscription = req.body.subscription
     subscriptions.set(user, subscription);
@@ -82,6 +86,13 @@ app.delete('/api/alarm', (req, res) => {
     queue.remove((v) => v.user === req.user);
 
     res.status(200).json({msg: "alarm cleared"})
+})
+
+app.get('/api/me', (req, res) => {
+    if(!users.has(req.user)) {
+        users.set(req.user, createUser(req.user));
+    }
+    res.status(200).json(users.get(req.user));
 })
 
 app.get('/', (req, res) => {

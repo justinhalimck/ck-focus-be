@@ -1,3 +1,5 @@
+import { faker } from "@faker-js/faker";
+
 export function auth(req, res, next) {
     const user = req.headers['x-focus-user']
     if (!user && req.originalUrl.includes('/api/')) return res.status(401)
@@ -16,5 +18,17 @@ export function createAlert(
         notifyAt,
         title,
         body,
+    }
+}
+
+export function createUser(
+    id,
+) {
+    return {
+        uuid: faker.string.uuid(),
+        id: id,
+        firstName: faker.person.firstName(),
+        lastName: faker.person.lastName(),
+        img: faker.image.avatarGitHub(),
     }
 }
