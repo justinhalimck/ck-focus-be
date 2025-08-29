@@ -30,5 +30,6 @@ export function createUser(
         firstName: faker.person.firstName(),
         lastName: faker.person.lastName(),
         img: faker.image.avatarGitHub(),
+        department: faker.commerce.department(),
     }
 }
